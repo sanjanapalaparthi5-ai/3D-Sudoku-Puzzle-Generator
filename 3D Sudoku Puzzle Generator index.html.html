@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>3D Sudoku Puzzle Generator</title>
+
+<style>
+body { margin:0; overflow:hidden; background:black; font-family:Arial; }
+
+h1{
+  position:absolute;
+  top:10px;
+  width:100%;
+  text-align:center;
+  color:white;
+  z-index:10;
+}
+
+.buttons{
+  position:absolute;
+  top:60px;
+  width:100%;
+  text-align:center;
+  z-index:10;
+}
+
+button{
+  padding:8px 15px;
+  margin:5px;
+  border:none;
+  border-radius:5px;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<h1>3D Sudoku Puzzle Generator</h1>
+
+<div class="buttons">
+  <button onclick="loadSudoku('easy')">Basic</button>
+  <button onclick="loadSudoku('medium')">Intermediate</button>
+  <button onclick="loadSudoku('hard')">Advanced</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+
+let scene, camera, renderer, controls;
+let cubes = [];
+
+init();
+
+function init(){
+  scene = new THREE.Scene();
+
+  camera = new THREE.PerspectiveCamera(
+    75,
+    window.innerWidth/window.innerHeight,
+    0.1,
+    1000
+  );
+
+  renderer = new THREE.WebGLRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+
+  const light = new THREE.PointLight(0xffffff,1);
+  light.position.set(10,10,10);
+  scene.add(light);
+
+  camera.position.z = 10;
+
+  loadSudoku('easy');
+
+  animate();
+}
+
+function createTexture(num){
+  const canvas=document.createElement("canvas");
+  canvas.width=128;
+  canvas.height=128;
+  const ctx=canvas.getContext("2d");
+
+  ctx.fillStyle="#2196f3";
+  ctx.fillRect(0,0,128,128);
+
+  ctx.fillStyle="white";
+  ctx.font="bold 80px Arial";
+  ctx.textAlign="center";
+  ctx.textBaseline="middle";
+  ctx.fillText(num,64,64);
+
+  return new THREE.CanvasTexture(canvas);
+}
+
+function clearGrid(){
+  cubes.forEach(c=>scene.remove(c));
+  cubes=[];
+}
+
+function loadSudoku(level){
+  clearGrid();
+
+  let sudoku;
+
+  if(level==='easy'){
+    sudoku = [
+     [5,3,0,0,7,0,0,0,0],
+     [6,0,0,1,9,5,0,0,0],
+     [0,9,8,0,0,0,0,6,0],
+     [8,0,0,0,6,0,0,0,3],
+     [4,0,0,8,0,3,0,0,1],
+     [7,0,0,0,2,0,0,0,6],
+     [0,6,0,0,0,0,2,8,0],
+     [0,0,0,4,1,9,0,0,5],
+     [0,0,0,0,8,0,0,7,9]
+    ];
+  }
+  else if(level==='medium'){
+    sudoku = [
+     [0,0,0,2,6,0,7,0,1],
+     [6,8,0,0,7,0,0,9,0],
+     [1,9,0,0,0,4,5,0,0],
+     [8,2,0,1,0,0,0,4,0],
+     [0,0,4,6,0,2,9,0,0],
+     [0,5,0,0,0,3,0,2,8],
+     [0,0,9,3,0,0,0,7,4],
+     [0,4,0,0,5,0,0,3,6],
+     [7,0,3,0,1,8,0,0,0]
+    ];
+  }
+  else{
+    sudoku = [
+     [0,0,0,0,0,0,0,1,2],
+     [0,0,0,0,0,7,0,0,0],
+     [0,0,1,0,9,0,0,0,0],
+     [0,0,0,0,0,0,3,0,0],
+     [0,5,0,1,0,9,0,8,0],
+     [0,0,6,0,0,0,0,0,0],
+     [0,0,0,0,3,0,5,0,0],
+     [0,0,0,7,0,0,0,0,0],
+     [9,1,0,0,0,0,0,0,0]
+    ];
+  }
+
+  const size=0.7;
+  const gap=0.9;
+
+  for(let i=0;i<9;i++){
+    for(let j=0;j<9;j++){
+
+      let material;
+
+      if(sudoku[i][j]!==0){
+        material = new THREE.MeshBasicMaterial({
+          map: createTexture(sudoku[i][j])
+        });
+      } else {
+        material = new THREE.MeshBasicMaterial({ color:0x2196f3 });
+      }
+
+      const cube = new THREE.Mesh(
+        new THREE.BoxGeometry(size,size,size),
+        material
+      );
+
+      cube.position.x = (j-4)*gap;
+      cube.position.y = (4-i)*gap;
+
+      scene.add(cube);
+      cubes.push(cube);
+    }
+  }
+}
+
+function animate(){
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene,camera);
+}
+
+window.addEventListener("resize",()=>{
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth,window.innerHeight);
+});
+
+</script>
+
+</body>
+</html>
